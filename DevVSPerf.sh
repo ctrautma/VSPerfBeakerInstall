@@ -3,12 +3,17 @@
 mypass="RedHat16"
 
 # install and setup vnc
-yum -y install echo$(
-tigervnc.x86_64
+yum -y install $(echo "
+tigervnc.x86_64"
 )
-echo "$mypass" >password.tmp
-vncpasswd password.tmp
-rm -F password.tmp
+if [ -e ~/.vnc ]
+then
+    echo "Skipping .vnc folder creation"
+else
+    mkdir ~/.vnc
+fi
+
+cp passwd ~/.vnc/passwd
 
 # setup Pycharm
 cd ~
