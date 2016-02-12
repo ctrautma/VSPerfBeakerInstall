@@ -4,7 +4,7 @@ mypass="RedHat16"
 
 # install and setup vnc
 yum -y install $(echo "
-tigervnc.x86_64"
+tigervnc-server.x86_64"
 )
 if [ -e ~/.vnc ]
 then
