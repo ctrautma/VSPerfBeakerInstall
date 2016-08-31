@@ -39,11 +39,14 @@ TESTCASE_FILE="/root/vswitchperf/testcases/testcase.py"
 
 # settings to change if needed
 # OVS RPM to install
-ovs_rpm="http://download-node-02.eng.bos.redhat.com/brewroot/packages/openvswitch/2.5.0/5.git20160628.el7fdb/x86_64/openvswitch-2.5.0-5.git20160628.el7fdb.x86_64.rpm"
+#ovs_rpm="http://download-node-02.eng.bos.redhat.com/brewroot/packages/openvswitch/2.5.0/5.git20160628.el7fdb/x86_64/openvswitch-2.5.0-5.git20160628.el7fdb.x86_64.rpm"
+ovs_rpm="http://download-node-02.eng.bos.redhat.com/brewroot/packages/openvswitch/2.5.0/10.git20160727.el7fdb/x86_64/openvswitch-2.5.0-10.git20160727.el7fdb.x86_64.rpm"
 
 # DPDK RPMS to install in guest and host
-dpdk_rpm="http://download.eng.pnq.redhat.com/brewroot/packages/dpdk/16.04/4.el7fdb/x86_64/dpdk-16.04-4.el7fdb.x86_64.rpm"
-dpdk_tools_rpm="http://download.eng.pnq.redhat.com/brewroot/packages/dpdk/16.04/4.el7fdb/x86_64/dpdk-tools-16.04-4.el7fdb.x86_64.rpm"
+#dpdk_rpm="http://download.eng.pnq.redhat.com/brewroot/packages/dpdk/16.04/4.el7fdb/x86_64/dpdk-16.04-4.el7fdb.x86_64.rpm"
+#dpdk_tools_rpm="http://download.eng.pnq.redhat.com/brewroot/packages/dpdk/16.04/4.el7fdb/x86_64/dpdk-tools-16.04-4.el7fdb.x86_64.rpm"
+dpdk_rpm="http://download.eng.pnq.redhat.com/brewroot/packages/dpdk/2.2.0/3.el7/x86_64/dpdk-2.2.0-3.el7.x86_64.rpm"
+dpdk_tools_rpm="http://download.eng.pnq.redhat.com/brewroot/packages/dpdk/2.2.0/3.el7/x86_64/dpdk-tools-2.2.0-3.el7.x86_64.rpm"
 
 # XENA Info
 xena_ip="10.19.15.19"
@@ -120,6 +123,20 @@ cp /usr/share/openvswitch/vswitch.ovsschema /usr/bin/vswitchd/.
 
 }
 
+delete_bits() {
+X=$(rpm -qa | grep openvswitch)
+rpm -e $X
+X=$(rpm -qa | grep dpdk-tools)
+rpm -e $X
+X=$(rpm -qa | grep dpdk)
+rpm -e $X
+rm -f /usr/share/dpdk/*.rpm
+
+rm -Rf /usr/bin/ovsdb
+rm -Rf /usr/bin/utilities
+rm -Rf /usr/bin/vswitchd
+
+}
 change_conf_file() {
 
 echo "start to change the redhat related conf..."
@@ -165,9 +182,9 @@ install_rpms() {
 
 # these need to be changed to by dynamic based on the beaker recipe
 echo "start to install ovs rpm in host"
-wget http://download-node-02.eng.bos.redhat.com/brewroot/packages/openvswitch/2.5.0/5.git20160628.el7fdb/x86_64/openvswitch-2.5.0-5.git20160628.el7fdb.x86_64.rpm >/dev/null 2>&1
-wget http://download.eng.pnq.redhat.com/brewroot/packages/dpdk/16.04/4.el7fdb/x86_64/dpdk-16.04-4.el7fdb.x86_64.rpm >/dev/null 2>&1
-wget http://download.eng.pnq.redhat.com/brewroot/packages/dpdk/16.04/4.el7fdb/x86_64/dpdk-tools-16.04-4.el7fdb.x86_64.rpm >/dev/null 2>&1
+wget $ovs_rpm >/dev/null 2>&1
+wget $dpdk_rpm >/dev/null 2>&1
+wget $dpdk_tools_rpm >/dev/null 2>&1
 rpm -ivh *.rpm
 mkdir -p /usr/share/dpdk
 mv *.rpm /usr/share/dpdk/.
@@ -377,8 +394,10 @@ add_rte_version() {
 #main
 if [ ! -z $1 ]
 then
-    if [ $1 eq "copyonly" ]
+    if [ $1 = "copyonly" ]
     then
+    delete_bits
+    install_rpms
     copy_bits
     exit 0
     fi
