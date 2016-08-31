@@ -215,7 +215,7 @@ if [ "$OS_NAME" == "7.3" ]
     then
         sed -i '/GUEST_IMAGE =/c\GUEST_IMAGE = ["rhel7.3.qcow2","rhel7.3.qcow2"]' ~/vswitchperf/conf/04_vnf.conf
     else
-        sed -i '/GUEST_IMAGE =/c\GUEST_IMAGE = ["rhel7.2.z.qcow2","rhel7.2.z.qcow2"]' ~/vswitchperf/conf/04_vnf.conf
+        sed -i '/GUEST_IMAGE =/c\GUEST_IMAGE = ["rhel7.2.qcow2","rhel7.2.qcow2"]' ~/vswitchperf/conf/04_vnf.conf
 fi
 sed -i '/GUEST_BOOT_DRIVE_TYPE/c\GUEST_BOOT_DRIVE_TYPE = "ide"' ~/vswitchperf/conf/04_vnf.conf
 sed -i '/GUEST_SHARED_DRIVE_TYPE/c\GUEST_SHARED_DRIVE_TYPE = "ide"' ~/vswitchperf/conf/04_vnf.conf
@@ -233,7 +233,7 @@ if [ "$OS_NAME" == "7.3" ]
     then
         wget -P ~/vswitchperf/ http://netqe-infra01.knqe.lab.eng.bos.redhat.com/vm/rhel7.3.qcow2 >/dev/null 2>&1
     else
-        wget -P ~/vswitchperf/ http://netqe-infra01.knqe.lab.eng.bos.redhat.com/vm/rhel7.2.qcow2 >/dev/null 2>&1
+        wget -P ~/vswitchperf/ http://netqe-infra01.knqe.lab.eng.bos.redhat.com/vm/rhel7.2.z.qcow2 >/dev/null 2>&1
 fi
 }
 
