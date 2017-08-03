@@ -1,6 +1,8 @@
 #!/bin/bash
 
+
 yum install -y virt-install libvirt
+systemctl start libvirtd
 
 enforce_status=`getenforce`
 
