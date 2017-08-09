@@ -11,7 +11,7 @@ setenforce permissive
 LOCATION="http://download-node-02.eng.bos.redhat.com/released/RHEL-7/7.3/Server/x86_64/os/"
 CPUS=3
 DEBUG="no"
-export VIOMMU="NO"
+VIOMMU="NO"
 
 progname=$0
 
@@ -112,15 +112,15 @@ gpgcheck=0
 skip_if_unavailable=1
 REPO
 
-cat >/root/viommu_setting.txt <<EOT
-VIOMMU_SETTING=$VIOMMU
-EOT
-
 yum install -y tuna git nano ftp wget sysstat 1>/root/post_install.log 2>&1
 git clone https://github.com/ctrautma/vmscripts.git /root/vmscripts 1>/root/post_install.log 2>&1
 mv /root/vmscripts/* /root/. 1>/root/post_install.log 2>&1
 rm -RF /root/vmscripts 1>/root/post_install.log 2>&1
-/root/setup_rpms.sh 1>/root/post_install.log 2>&1
+if [ "$VIOMMU" == "NO" ]; then
+    /root/setup_rpms.sh 1>/root/post_install.log 2>&1
+elif [ "$VIOMMU" == "YES" ]; then
+    /root/setup_rpms.sh -v 1>/root/post_install.log 2>&1
+fi
 
 %end
 

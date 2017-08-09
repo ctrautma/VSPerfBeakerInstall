@@ -116,7 +116,15 @@ install_mono_rpm() {
 }
 
 Copy_Xena2544() {
-    c
+    echo "start to copy xena2544.exe to xena folder..."
+    #copy xena2544.exe to the test machine
+    HOST='10.19.17.65'
+    USER='user1'
+    PASSWD='xena'
+    FILE='Xena2544.exe'
+
+    wget --user="${USER}" --password="${PASSWD}" "ftp://${HOST}/${FILE}"
+    mv Xena2544.exe ~/vswitchperf/tools/pkt_gen/xena/.
 }
 
 clone_vsperf() {
