@@ -112,7 +112,7 @@ gpgcheck=0
 skip_if_unavailable=1
 REPO
 
-cat >~/viommu_setting.txt <<EOT
+cat >/root/viommu_setting.txt <<EOT
 VIOMMU_SETTING=$VIOMMU
 EOT
 
