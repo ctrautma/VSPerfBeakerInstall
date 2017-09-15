@@ -143,7 +143,7 @@ virt-install --name=$vm\
 	 --network bridge=$bridge\
 	 --graphics none\
 	 --extra-args="$extra"\
-	 --initrd-inject=/root/$dist-vm.ks\
+	 --initrd-inject=$dist-vm.ks\
 	 --location=$location\
 	 --noreboot\
          --serial pty\
@@ -157,7 +157,7 @@ virt-install --name=$vm\
          --network bridge=$bridge\
          --graphics none\
          --extra-args="$extra"\
-         --initrd-inject=/root/$dist-vm.ks\
+         --initrd-inject=$dist-vm.ks\
          --location=$location\
          --noreboot\
          --serial pty\
