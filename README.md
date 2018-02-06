@@ -8,9 +8,11 @@ provided.
 For beaker tests simply grab your compose location and then apply it 
 to the execution of the script.
 
-
+"""
 MYCOMPOSE=`cat /etc/yum.repos.d/beaker-Server.repo | grep baseurl | cut -c9-`
+
 vmcreate.sh -c 3 -l $MYCOMPOSE
+"""
 
 The -c is important to specify how the VM will be tuned. This option 
 sets the tuned-adm cpu-partitioning profile how many CPUs to add
