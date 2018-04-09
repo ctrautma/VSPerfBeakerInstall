@@ -12,6 +12,7 @@ LOCATION="http://download-node-02.eng.bos.redhat.com/released/RHEL-7/7.3/Server/
 CPUS=3
 DEBUG="no"
 VIOMMU="NO"
+DPDK_BUILD="NO"
 
 progname=$0
 
@@ -22,7 +23,7 @@ EOF
    exit 0
 }
 
-while getopts c:l:dhv FLAG; do
+while getopts c:l:dhvu FLAG; do
    case $FLAG in
 
    c)  echo "Creating VM with $OPTARG cpus" 
@@ -33,6 +34,8 @@ while getopts c:l:dhv FLAG; do
        ;;
    v)  echo "VIOMMU is enabled"
        VIOMMU="YES";;
+   u)  echo "Building upstream DPDK"
+       DPDK_BUILD="YES";;
    d)  echo "debug enabled" 
        DEBUG="yes";;
    h)  echo "found $opt" ; usage ;;
@@ -116,10 +119,14 @@ yum install -y tuna git nano ftp wget sysstat 1>/root/post_install.log 2>&1
 git clone https://github.com/ctrautma/vmscripts.git /root/vmscripts 1>/root/post_install.log 2>&1
 mv /root/vmscripts/* /root/. 1>/root/post_install.log 2>&1
 rm -RF /root/vmscripts 1>/root/post_install.log 2>&1
-if [ "$VIOMMU" == "NO" ]; then
+if [ "$VIOMMU" == "NO" ] && [ "$DPDK_BUILD" == "NO" ; then
     /root/setup_rpms.sh 1>/root/post_install.log 2>&1
-elif [ "$VIOMMU" == "YES" ]; then
+elif [ "$VIOMMU" == "YES" ] && [ "DPDK_BUILD" == "NO"; then
     /root/setup_rpms.sh -v 1>/root/post_install.log 2>&1
+elif [ "$VIOMMU" == "NO" ] && [ "DPDK_BUILD" == "YES"; then
+    /root/setup_rpms.sh -u 1>/root/post_install.log 2>&1
+elif [ "$VIOMMU" == "YES" ] && [ "DPDK_BUILD" == "YES"; then
+    /root/setup_rpms.sh -u -v 1>/root/post_install.log 2>&1
 fi
 
 %end
