@@ -122,11 +122,11 @@ rm -Rf /root/vmscripts 1>/root/post_install.log 2>&1
 
 if [ "$VIOMMU" == "NO" ] && [ "$DPDK_BUILD" == "NO" ]; then
     /root/setup_rpms.sh 1>/root/post_install.log 2>&1
-elif [ "$VIOMMU" == "YES" ] && [ "DPDK_BUILD" == "NO" ]; then
+elif [ "$VIOMMU" == "YES" ] && [ "$DPDK_BUILD" == "NO" ]; then
     /root/setup_rpms.sh -v 1>/root/post_install.log 2>&1
-elif [ "$VIOMMU" == "NO" ] && [ "DPDK_BUILD" == "YES" ]; then
+elif [ "$VIOMMU" == "NO" ] && [ "$DPDK_BUILD" == "YES" ]; then
     /root/setup_rpms.sh -u 1>/root/post_install.log 2>&1
-elif [ "$VIOMMU" == "YES" ] && [ "DPDK_BUILD" == "YES" ]; then
+elif [ "$VIOMMU" == "YES" ] && [ "$DPDK_BUILD" == "YES" ]; then
     /root/setup_rpms.sh -u -v 1>/root/post_install.log 2>&1
 fi
 
