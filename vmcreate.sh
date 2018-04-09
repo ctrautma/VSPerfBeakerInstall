@@ -118,7 +118,8 @@ REPO
 yum install -y tuna git nano ftp wget sysstat 1>/root/post_install.log 2>&1
 git clone https://github.com/ctrautma/vmscripts.git /root/vmscripts 1>/root/post_install.log 2>&1
 mv /root/vmscripts/* /root/. 1>/root/post_install.log 2>&1
-rm -RF /root/vmscripts 1>/root/post_install.log 2>&1
+rm -Rf /root/vmscripts 1>/root/post_install.log 2>&1
+
 if [ "$VIOMMU" == "NO" ] && [ "$DPDK_BUILD" == "NO" ]; then
     /root/setup_rpms.sh 1>/root/post_install.log 2>&1
 elif [ "$VIOMMU" == "YES" ] && [ "DPDK_BUILD" == "NO" ]; then
