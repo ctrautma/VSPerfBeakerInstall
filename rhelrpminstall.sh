@@ -57,12 +57,17 @@ xena_module="3"
 
 # NICs to use in VSPerf
 HOSTNAME=`hostname | awk -F'.' '{print $1}'`
-if [ "$HOSTNAME" == "netqe22" ]
+if [ "$HOSTNAME" == "netqe22" ] ||[  "$HOSTNAME" == "netqe24" ] || [ "$HOSTNAME" == "netqe25" ]
     then
     NIC1="p6p1"
     NIC2="p6p2"
     PMDMASK="050000050000"
-elif [ "$HOSTNAME" == "netqe15" ]
+elif [ "$HOSTNAME" == "netqe10" ] ||[  "$HOSTNAME" == "netqe9" ]
+    then
+    NIC1="p6p1"
+    NIC2="p6p2"
+    PMDMASK="5500"
+elif [ "$HOSTNAME" == "netqe15" ] || [  "$HOSTNAME" == "netqe16" ]
     then
     NIC1="p2p1"
     NIC2="p2p2"
@@ -72,27 +77,35 @@ elif [ "$HOSTNAME" == "netqe23" ]
     NIC1="p6p1"
     NIC2="p6p2"
     PMDMASK="500000000500000000"
+elif [ "$HOSTNAME" == "netqe26" ]
+    then
+    NIC1="enp9s0"
+    NIC2="enp10s0"
+    PMDMASK="0xc00000c00"
 else
     echo "Please setup this system with this script...."
     exit 1
 fi
 
-NIC1_PCI_ADDR=`ethtool -i $NIC1 | grep -Eo '[0-9]+:[0-9]+:[0-9]+\.[0-9]+'`
-NIC2_PCI_ADDR=`ethtool -i $NIC2 | grep -Eo '[0-9]+:[0-9]+:[0-9]+\.[0-9]+'`
+NIC1_PCI_ADDR=`ethtool -i $NIC1 | awk /bus-info/ | awk {'print $2'}`
+NIC2_PCI_ADDR=`ethtool -i $NIC2 | awk /bus-info/ | awk {'print $2'}`
 NICNUMA=`cat /sys/class/net/$NIC1/device/numa_node`
 
 # Isolated CPU list
 ISOLCPUS=`lscpu | grep "NUMA node$NICNUMA" | awk '{print $4}'`
 
-if [ `echo $ISOLCPUS | awk /'^0,'/` ]
+if [[ `echo $ISOLCPUS | awk /'^0,'/ ` ]]
     then
     ISOLCPUS=`echo $ISOLCPUS | cut -c 3-`
+elif [[ `echo $ISOLCPUS | awk /'^0-[0-9]'/ ` ]]
+    then
+    ISOLCPUS=`echo $ISOLCPUS | sed s/^0/1/`
 fi
 
 #kernel_update='http://download.eng.bos.redhat.com/rel-eng/RHEL-7.4-20170608.3/compose/Server/x86_64/os'
 
 install_utilities() {
-yum install -y wget nano ftp yum-utils git tuna openssl sysstat
+yum install -y wget nano ftp yum-utils git tuna openssl sysstat python-setuptools python-netifaces
 }
 
 run_build_scripts() {
@@ -100,6 +113,7 @@ run_build_scripts() {
 echo "start to run the build_base_machine.sh..."
 cd ~/vswitchperf/systems
 mv rhel/7.2/ rhel/7.4
+cp rhel/7.3/ rhel/7.5 -R
 sed -i s/'    make || die "Make failed"'/'#     make || die "Make failed"'/ ~/vswitchperf/systems/build_base_machine.sh
 ./build_base_machine.sh >>/dev/null
 cd ~/vswitchperf
@@ -111,14 +125,14 @@ install_mono_rpm() {
     echo "start to install mono rpm..."
     rpm --import "http://keyserver.ubuntu.com/pks/lookup?op=get&search=0x3FA7E0328081BFF6A14DA29AA6A19B38D3D831EF"
     yum-config-manager --add-repo http://download.mono-project.com/repo/centos/
-    yum -y install mono-complete
+    yum -y install mono-complete-5.8.0.127-0.xamarin.3.epel7.x86_64
     yum-config-manager --disable download.mono-project.com_repo_centos_
 }
 
 Copy_Xena2544() {
     echo "start to copy xena2544.exe to xena folder..."
     #copy xena2544.exe to the test machine
-    HOST='10.19.17.65'
+    HOST='10.19.188.65'
     USER='user1'
     PASSWD='xena'
     FILE='Xena2544.exe'
@@ -132,6 +146,9 @@ clone_vsperf() {
 echo "start to clone vsperf project..."
 cd ~
 git clone https://gerrit.opnfv.org/gerrit/vswitchperf
+git checkout bdc5346c3d2170d857274262e1ecf6872d00249e
+git fetch https://gerrit.opnfv.org/gerrit/vswitchperf refs/changes/77/51777/2 && git cherry-pick FETCH_HEAD #python34 fix
+git fetch https://gerrit.opnfv.org/gerrit/vswitchperf refs/changes/77/54477/1 && git cherry-pick FETCH_HEAD
 }
 
 download_rpms() {
@@ -146,7 +163,7 @@ fi
 # these need to be changed to by dynamic based on the beaker recipe
 echo "start to install ovs rpm in host"
 cd ~
-mkdir ovs2613 ovs2708 dpdk1607 dpdk1611 qemu2301 tuned_profiles27 tuned_profiles28
+mkdir ovs2613 ovs2708 dpdk1607 dpdk1611 qemu2301 tuned_profiles27 tuned_profiles28 qemu210
 wget http://$SERVER/brewroot/packages/openvswitch/2.6.1/3.git20161206.el7fdb/x86_64/openvswitch-2.6.1-3.git20161206.el7fdb.x86_64.rpm -P ~/ovs2613/.
 wget http://$SERVER/brewroot/packages/dpdk/16.07/1.el7fdb/x86_64/dpdk-16.07-1.el7fdb.x86_64.rpm -P ~/dpdk1607/.
 wget http://$SERVER/brewroot/packages/dpdk/16.07/1.el7fdb/x86_64/dpdk-tools-16.07-1.el7fdb.x86_64.rpm -P ~/dpdk1607/.
@@ -161,12 +178,42 @@ wget http://$SERVER/brewroot/packages/tuned/2.8.0/2.el7fdp/noarch/tuned-profiles
 wget http://$SERVER/brewroot/packages/tuned/2.8.0/2.el7fdp/noarch/tuned-profiles-nfv-2.8.0-2.el7fdp.noarch.rpm -P ~/tuned_profiles28/.
 wget http://$SERVER/brewroot/packages/tuned/2.8.0/2.el7fdp/noarch/tuned-profiles-realtime-2.8.0-2.el7fdp.noarch.rpm -P ~/tuned_profiles28/.
 wget http://$SERVER/brewroot/packages/openvswitch/2.7.0/8.git20170530.el7fdb/x86_64/openvswitch-2.7.0-8.git20170530.el7fdb.x86_64.rpm -P ~/ovs2708/.
-yum install -y qemu-kvm-rhev*
-rpm -ivh $ovs_folder
-rpm -ivh $dpdk_folder
-rpm -Uvh $tuned_folder/tuned-2.8.0-2.el7fdp.noarch.rpm
-rpm -ivh $tuned_folder/tuned-profiles-cpu-partitioning-2.8.0-2.el7fdp.noarch.rpm
 
+yum install -y http://download.lab.bos.redhat.com/rcm-guest/puddles/OpenStack/rhos-release/rhos-release-latest.noarch.rpm
+
+rhos-release 13
+
+yum install -y qemu-kvm-rhev*
+# install qemu 2.10
+#yum install -y device-mapper-multipath-libs
+#wget http://$SERVER/brewroot/packages/qemu-kvm-rhev/2.10.0/20.el7/x86_64/qemu-img-rhev-2.10.0-20.el7.x86_64.rpm -P ~/qemu210/.
+#wget http://$SERVER/brewroot/packages/qemu-kvm-rhev/2.10.0/20.el7/x86_64/qemu-kvm-common-rhev-2.10.0-20.el7.x86_64.rpm -P ~/qemu210/.
+#wget http://$SERVER/brewroot/packages/qemu-kvm-rhev/2.10.0/20.el7/x86_64/qemu-kvm-rhev-2.10.0-20.el7.x86_64.rpm -P ~/qemu210/.
+#wget http://$SERVER/brewroot/packages/qemu-kvm-rhev/2.10.0/20.el7/x86_64/qemu-kvm-tools-rhev-2.10.0-20.el7.x86_64.rpm -P ~/qemu210/.
+#cd ~/qemu210
+#rpm -Uvh *
+#cd ~
+
+yum install -y http://download-node-02.eng.bos.redhat.com/brewroot/packages/dpdk/16.11.2/6.el7/x86_64/dpdk-16.11.2-6.el7.x86_64.rpm
+yum install -y http://download-node-02.eng.bos.redhat.com/brewroot/packages/dpdk/16.11.2/6.el7/x86_64/dpdk-tools-16.11.2-6.el7.x86_64.rpm
+yum install -y http://download-node-02.eng.bos.redhat.com/brewroot/packages/driverctl/0.95/1.el7fdparch/noarch/driverctl-0.95-1.el7fdparch.noarch.rpm
+
+if [ $VERSION_ID == "7.4" ] || [ $VERSION_ID == "7.3" ]
+then
+    rpm -Uvh $tuned_folder/tuned-2.8.0-2.el7fdp.noarch.rpm
+    rpm -ivh $tuned_folder/tuned-profiles-cpu-partitioning-2.8.0-2.el7fdp.noarch.rpm
+else
+    yum install -y tuned-profiles-cpu-partitioning
+fi
+
+}
+
+clone_trex() {
+cd ~
+git clone https://github.com/cisco-system-traffic-generator/trex-core
+cd ~/trex-core/linux_dpdk
+./b configure
+./b build
 }
 
 configure_hugepages() {
@@ -213,7 +260,7 @@ qemu_modified_code() {
 
 # remove drive sharing
 sed -i "/                     '-drive',$/,+3 d" ~/vswitchperf/vnfs/qemu/qemu.py
-sed -i "/self._copy_fwd_tools_for_all_guests()/c\#self._copy_fwd_tools_for_all_guests()" ~/vswitchperf/testcases/testcase.py
+sed -i "/self._copy_fwd_tools_for_all_guests/c\#self._copy_fwd_tools_for_all_guests" ~/vswitchperf/testcases/testcase.py
 
 cat <<EOT >> ~/vswitchperf/vnfs/qemu/qemu.py
     def _configure_testpmd(self):
@@ -233,7 +280,7 @@ cat <<EOT >> ~/vswitchperf/vnfs/qemu/qemu.py
             'mount -t hugetlbfs hugetlbfs /dev/hugepages')
 
         self.execute_and_wait('cat /proc/meminfo')
-        self.execute_and_wait('rpm -ivh ~/dpdkrpms/1705/*.rpm ')
+        self.execute_and_wait('rpm -ivh ~/dpdkrpms/1711/*.rpm ')
         self.execute_and_wait('cat /proc/cmdline')
         self.execute_and_wait('dpdk-devbind --status')
 
@@ -439,7 +486,7 @@ PATHS['dpdk'] = {
             'testpmd': os.path.join(RTE_TARGET, 'app', 'testpmd'),
         },
         'bin': {
-            'bind-tool': '/usr/share/dpdk/tools/dpdk-devbind.py',
+            'bind-tool': '/usr/sbin/dpdk-devbind',
             'modules' : ['uio', 'vfio-pci'],
             'testpmd' : 'testpmd'
         }
@@ -684,6 +731,8 @@ EOT
 systemctl start libvirtd
 virsh define guest30032.xml
 
+
+
 }
 
 update_kernel() {
@@ -800,8 +849,27 @@ EOT
 chmod +x ~/cpu_layout.py
 }
 
+install_selinux_package() {
+yum install -y http://download-node-02.eng.bos.redhat.com/brewroot/packages/container-selinux/2.36/1.gitff95335.el7/noarch/container-selinux-2.36-1.gitff95335.el7.noarch.rpm
+yum install -y http://download-node-02.eng.bos.redhat.com/brewroot/packages/openstack-selinux/0.8.12/0.20171204232656.7e9ef4a.el7ost/noarch/openstack-selinux-0.8.12-0.20171204232656.7e9ef4a.el7ost.noarch.rpm
+setenforce 1
+}
+
+clone_PFT() {
+cd ~
+git clone https://github.com/ctrautma/RHEL_NIC_QUALIFICATION.git
+}
+
+add_bashrc_shortcuts() {
+cat <<EOT >> ~/.bashrc
+alias vs='cd ~/vswitchperf'
+bpass=QwAo2U6GRxyNPKiZaOCx
+alias pft="cd ~/RHEL_NIC_QUALIFICATION"
+EOT
+}
+
 install_utilities
-add_yum_profiles
+#add_yum_profiles
 download_rpms
 clone_vsperf
 run_build_scripts
@@ -816,6 +884,10 @@ create_10_conf
 create_bind_script
 create_other_scripts
 create_guest_image
+install_selinux_package
 cpu_layout
+clone_trex
+clone_PFT
+add_bashrc_shortcuts
 #update_kernel
 configure_hugepages
