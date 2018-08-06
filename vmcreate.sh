@@ -147,7 +147,7 @@ virt-install --name=$vm\
 	 --virt-type=kvm\
 	 --disk path=$image_path/$master_image,format=qcow2,,size=3,bus=virtio\
 	 --vcpus=$CPUS\
-	 --ram=4096\
+	 --ram=8192\
 	 --network bridge=$bridge\
 	 --graphics none\
 	 --extra-args="$extra"\
@@ -161,7 +161,7 @@ virt-install --name=$vm\
          --virt-type=kvm\
          --disk path=$image_path/$master_image,format=qcow2,,size=3,bus=virtio\
          --vcpus=$CPUS\
-         --ram=4096\
+         --ram=8192\
          --network bridge=$bridge\
          --graphics none\
          --extra-args="$extra"\

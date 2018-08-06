@@ -375,7 +375,7 @@ GUEST_NICS = [[{'device' : 'eth0', 'mac' : '#MAC(00:00:00:00:00:01,2)', 'pci' : 
                {'device' : 'eth3', 'mac' : '#MAC(cc:00:00:00:00:02,2)', 'pci' : '00:07.0', 'ip' : '#IP(192.168.1.5,4)/24'},
              ]]
 
-GUEST_MEMORY = ['4096']
+GUEST_MEMORY = ['8192']
 
 GUEST_HUGEPAGES_NR = ['1']
 
