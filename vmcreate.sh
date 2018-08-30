@@ -115,6 +115,27 @@ gpgcheck=0
 skip_if_unavailable=1
 REPO
 
+if [ -f /etc/sysconfig/network-scripts/ifcfg-eth0 ]; then
+
+cat >/etc/sysconfig/network-scripts/ifcfg-eth0 <<EOF
+NAME="eth0"
+DEVICE=eth0
+ONBOOT="yes"
+NETBOOT="yes"
+IPV6INIT="yes"
+BOOTPROTO="dhcp"
+TYPE="Ethernet"
+PROXY_METHOD="none"
+BROWSER_ONLY="no"
+DEFROUTE="yes"
+IPV4_FAILURE_FATAL="no"
+IPV6_AUTOCONF="yes"
+IPV6_DEFROUTE="yes"
+IPV6_FAILURE_FATAL="no"
+EOF
+
+fi
+
 yum install -y tuna git nano ftp wget sysstat 1>/root/post_install.log 2>&1
 git clone https://github.com/ctrautma/vmscripts.git /root/vmscripts 1>/root/post_install.log 2>&1
 mv /root/vmscripts/* /root/. 1>/root/post_install.log 2>&1
