@@ -51,8 +51,12 @@ master_image=master.qcow2
 image_path=/var/lib/libvirt/images/
 dist=rhel73
 location=$LOCATION
+if [[ ${location: -1} == "/" ]]
+then
+    location=${location: :-1}
+fi
 
-extra="ks=file:/$dist-vm.ks console=ttyS0,115200"
+extra="ks=file:/${dist}-vm.ks console=ttyS0,115200"
 
 master_exists=`virsh list --all | awk '{print $2}' | grep master`
 if [ -z $master_exists ]; then
@@ -67,6 +71,25 @@ fi
 echo deleting master image
 /bin/rm -f $image_path/$master_image
 
+
+rhel_version=`echo $location | awk -F '/' '{print $(NF-4)}' | awk -F '-' '{print $2}' | tr -d '.'`
+if (( $rhel_version >= 80 ))
+then
+    base_repo='repo --name="beaker-BaseOS" --baseurl='$location
+    app_repo='repo --name="beaker-AppStream" --baseurl='${location/BaseOS/AppStream}
+    highavail_repo='repo --name="beaker-HighAvailability" --baseurl='${location/BaseOS/HighAvailability}
+    nfv_repo='repo --name="beaker-NFV" --baseurl='${location/BaseOS/NFV}
+    storage_repo='repo --name="beaker-ResilientStorage" --baseurl='${location/BaseOS/ResilientStorage}
+    rt_repo='repo --name="beaker-RT" --baseurl='${location/BaseOS/RT}
+else
+    base_repo='#'
+    app_repo='#'
+    highavail_repo='#'
+    nfv_repo='#'
+    storage_repo='#'
+    rt_repo='#'
+fi
+
 cat << KS_CFG > $dist-vm.ks
 # System authorization information
 auth --enableshadow --passalgo=sha512
@@ -76,8 +99,17 @@ url --url=$location
 
 # Use text mode install
 text
+#graphical
+$base_repo
+$app_repo
+$highavail_repo
+$nfv_repo
+$storage_repo
+$rt_repo
+
 # Run the Setup Agent on first boot
-firstboot --enable
+#firstboot --enable
+firstboot --disabled
 ignoredisk --only-use=vda
 # Keyboard layouts
 keyboard --vckeymap=us --xlayouts='us'
@@ -85,27 +117,40 @@ keyboard --vckeymap=us --xlayouts='us'
 lang en_US.UTF-8
 
 # Network information
-network  --bootproto=dhcp --device=eth0 --ipv6=auto --activate
+#network  --bootproto=dhcp --device=eth0 --ipv6=auto --activate
+network  --bootproto=dhcp --ipv6=auto --activate
+
 # Root password
 rootpw  redhat
+
 # Do not configure the X Window System
 skipx
+
 # System timezone
 timezone US/Eastern --isUtc --ntpservers=10.16.31.254,clock.util.phx2.redhat.com,clock02.util.phx2.redhat.com
+
 # System bootloader configuration
 bootloader --location=mbr --timeout=5 --append="crashkernel=auto rhgb quiet console=ttyS0,115200"
+
 # Partition clearing information
 autopart --type=plain
 clearpart --all --initlabel --drives=vda
 zerombr
 
-%packages
+#firewall and selinux config
+firewall --enabled
+selinux --permissive
+
+
+
+%packages --ignoremissing
 @base
 @core
 @network-tools
 %end
 
 %post
+
 cat >/etc/yum.repos.d/beaker-Server-optional.repo <<REPO
 [beaker-Server-optional]
 name=beaker-Server-optional
@@ -115,24 +160,56 @@ gpgcheck=0
 skip_if_unavailable=1
 REPO
 
-if [ -f /etc/sysconfig/network-scripts/ifcfg-eth0 ]; then
 
-cat >/etc/sysconfig/network-scripts/ifcfg-eth0 <<EOF
-NAME="eth0"
-DEVICE=eth0
-ONBOOT="yes"
-NETBOOT="yes"
-IPV6INIT="yes"
-BOOTPROTO="dhcp"
-TYPE="Ethernet"
-PROXY_METHOD="none"
-BROWSER_ONLY="no"
-DEFROUTE="yes"
-IPV4_FAILURE_FATAL="no"
-IPV6_AUTOCONF="yes"
-IPV6_DEFROUTE="yes"
-IPV6_FAILURE_FATAL="no"
-EOF
+if (( $rhel_version >= 80 ))
+then
+
+touch /etc/yum.repos.d/rhel8.repo
+
+cat > /etc/yum.repos.d/rhel8.repo << REPO
+[RHEL-8-BaseOS]
+name=RHEL-8-BaseOS
+baseurl=$location
+enabled=1
+gpgcheck=0
+skip_if_unavailable=1
+
+[RHEL-8-AppStream]
+name=RHEL-8-AppStream
+baseurl=${location/BaseOS/AppStream}
+enabled=1
+gpgcheck=0
+skip_if_unavailable=1
+
+[RHEL-8-Highavail]
+name=RHEL-8-buildroot
+baseurl=${location/BaseOS/HighAvailability}
+enabled=1
+gpgcheck=0
+skip_if_unavailable=1
+
+[RHEL-8-Storage]
+name=RHEL-8-Storage
+baseurl=${location/BaseOS/ResilientStorage}
+enabled=1
+gpgcheck=0
+skip_if_unavailable=1
+
+[RHEL-8-NFV]
+name=RHEL-8-NFV
+baseurl=${location/BaseOS/NFV}
+enabled=1
+gpgcheck=0
+skip_if_unavailable=1
+
+[RHEL-8-RT]
+name=RHEL-8-RT
+baseurl=${location/BaseOS/RT}
+enabled=1
+gpgcheck=0
+skip_if_unavailable=1"
+
+REPO
 
 fi
 
@@ -155,7 +232,9 @@ fi
 
 shutdown
 
+
 KS_CFG
+
 
 echo creating new master image
 qemu-img create -f qcow2 $image_path/$master_image 100G
@@ -165,32 +244,32 @@ echo calling virt-install
 
 if [ $DEBUG == "yes" ]; then
 virt-install --name=$vm\
-	 --virt-type=kvm\
-	 --disk path=$image_path/$master_image,format=qcow2,,size=3,bus=virtio\
-	 --vcpus=$CPUS\
-	 --ram=8192\
-	 --network bridge=$bridge\
-	 --graphics none\
-	 --extra-args="$extra"\
-	 --initrd-inject=$dist-vm.ks\
-	 --location=$location\
-	 --noreboot\
-         --serial pty\
-         --serial file,path=/tmp/$vm.console
+    --virt-type=kvm\
+    --disk path=$image_path/$master_image,format=qcow2,,size=3,bus=virtio\
+    --vcpus=$CPUS\
+    --ram=8192\
+    --network bridge=$bridge\
+    --graphics none\
+    --extra-args="$extra"\
+    --initrd-inject `pwd`/$dist-vm.ks \
+    --location=$location\
+    --noreboot\
+    --serial pty\
+    --serial file,path=/tmp/$vm.console
 else
 virt-install --name=$vm\
-         --virt-type=kvm\
-         --disk path=$image_path/$master_image,format=qcow2,,size=3,bus=virtio\
-         --vcpus=$CPUS\
-         --ram=8192\
-         --network bridge=$bridge\
-         --graphics none\
-         --extra-args="$extra"\
-         --initrd-inject=$dist-vm.ks\
-         --location=$location\
-         --noreboot\
-         --serial pty\
-         --serial file,path=/tmp/$vm.console &> vminstaller.log
+    --virt-type=kvm\
+    --disk path=$image_path/$master_image,format=qcow2,,size=3,bus=virtio\
+    --vcpus=$CPUS\
+    --ram=8192\
+    --network bridge=$bridge\
+    --graphics none\
+    --extra-args="$extra"\
+    --initrd-inject `pwd`/$dist-vm.ks \
+    --location=$location\
+    --noreboot\
+    --serial pty\
+    --serial file,path=/tmp/$vm.console &> vminstaller.log
 fi
 
 rm $dist-vm.ks
