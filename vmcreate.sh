@@ -71,7 +71,8 @@ fi
 echo deleting master image
 /bin/rm -f $image_path/$master_image
 
-
+echo "sleep 30"
+sleep 20
 rhel_version=`echo $location | awk -F '/' '{print $(NF-4)}' | awk -F '-' '{print $2}' | tr -d '.'`
 if (( $rhel_version >= 80 ))
 then
@@ -211,6 +212,13 @@ skip_if_unavailable=1"
 
 REPO
 
+fi
+
+if (( $rhel_version >= 80 ))
+then
+       yum -y install iperf3
+else
+       yum -y install iperf
 fi
 
 yum install -y tuna git nano ftp wget sysstat 1>/root/post_install.log 2>&1
