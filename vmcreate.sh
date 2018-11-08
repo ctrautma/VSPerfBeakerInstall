@@ -1,7 +1,7 @@
 #!/bin/bash
 
 
-yum install -y virt-install libvirt
+yum install -y virt-install libvirt virt-manager
 systemctl start libvirtd
 
 enforce_status=`getenforce`
@@ -71,8 +71,6 @@ fi
 echo deleting master image
 /bin/rm -f $image_path/$master_image
 
-echo "sleep 30"
-sleep 20
 rhel_version=`echo $location | awk -F '/' '{print $(NF-4)}' | awk -F '-' '{print $2}' | tr -d '.'`
 if (( $rhel_version >= 80 ))
 then
