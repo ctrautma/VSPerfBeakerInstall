@@ -217,6 +217,7 @@ fi
 if (( $rhel_version >= 80 ))
 then
        yum -y install iperf3
+       ln -s /usr/bin/iperf3 /usr/bin/iperf
 else
        yum -y install iperf
 fi
