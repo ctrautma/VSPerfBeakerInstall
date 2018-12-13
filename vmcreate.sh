@@ -71,7 +71,7 @@ fi
 echo deleting master image
 /bin/rm -f $image_path/$master_image
 
-rhel_version=`echo $location | awk -F '/' '{print $(NF-4)}' | awk -F '-' '{print $2}' | tr -d '.'`
+rhel_version=`echo $location | awk -F '/' '{print $(NF-3)}' | awk -F '-' '{print $1}' | tr -d '.'`
 if (( $rhel_version >= 80 ))
 then
     base_repo='repo --name="beaker-BaseOS" --baseurl='$location
