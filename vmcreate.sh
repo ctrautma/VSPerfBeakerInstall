@@ -1,7 +1,7 @@
 #!/bin/bash
 
 
-yum install -y virt-install libvirt virt-manager
+yum install -y virt-install libvirt virt-manager util-linux
 systemctl start libvirtd
 
 enforce_status=`getenforce`
@@ -13,17 +13,19 @@ CPUS=3
 DEBUG="no"
 VIOMMU="NO"
 DPDK_BUILD="NO"
+DPDK_VERSION="http://download.eng.bos.redhat.com/brewroot/packages/dpdk/18.11/2.el7_6/x86_64/dpdk-18.11-2.el7_6.x86_64.rpm"
+
 
 progname=$0
 
 function usage () {
    cat <<EOF
-Usage: $progname [-c cpus] [-l url to compose] [-v enable viommu] [-d debug output to screen ]
+Usage: $progname [-c cpus] [-l url to compose] [-v enable viommu] [-d debug output to screen ] [-r dpdk package location for guest]
 EOF
    exit 0
 }
 
-while getopts c:l:dhvu FLAG; do
+while getopts c:l:r:dhvu FLAG; do
    case $FLAG in
 
    c)  echo "Creating VM with $OPTARG cpus" 
@@ -38,6 +40,9 @@ while getopts c:l:dhvu FLAG; do
        DPDK_BUILD="YES";;
    d)  echo "debug enabled" 
        DEBUG="yes";;
+   r)  echo "DPDK release verison"
+       DPDK_VERSION=$OPTARG
+       ;;
    h)  echo "found $opt" ; usage ;;
    \?)  usage ;;
    esac
@@ -55,6 +60,12 @@ if [[ ${location: -1} == "/" ]]
 then
     location=${location: :-1}
 fi
+
+DPDK_URL=$DPDK_VERSION
+#echo $DPDK_URL
+temp_str=$(basename $DPDK_URL)
+DPDK_TOOL_URL=$(dirname $DPDK_URL)/${temp_str/dpdk/dpdk-tools}
+
 
 extra="ks=file:/${dist}-vm.ks console=ttyS0,115200"
 
@@ -220,7 +231,17 @@ else
        yum -y install iperf
 fi
 
+
 yum install -y tuna git nano ftp wget sysstat 1>/root/post_install.log 2>&1
+
+#Here mkdir and download dpdk
+dir_name=`echo \`basename $DPDK_URL\` | grep -oP "[1-9]+\.[1-9]+\-[1-9]+" | sed -n 's/\.//p'`
+mkdir -p /root/dpdkrpms/$dir_name
+wget $DPDK_URL -P /root/dpdkrpms/$dir_name/.
+wget $DPDK_TOOL_URL -P /root/dpdkrpms/$dir_name/.
+
+
+
 git clone https://github.com/ctrautma/vmscripts.git /root/vmscripts 1>/root/post_install.log 2>&1
 mv /root/vmscripts/* /root/. 1>/root/post_install.log 2>&1
 rm -Rf /root/vmscripts 1>/root/post_install.log 2>&1
