@@ -13,8 +13,8 @@ CPUS=3
 DEBUG="no"
 VIOMMU="NO"
 DPDK_BUILD="NO"
-DPDK_VERSION="http://download.eng.bos.redhat.com/brewroot/packages/dpdk/18.11/2.el7_6/x86_64/dpdk-18.11-2.el7_6.x86_64.rpm"
-
+#DPDK_URL="http://download.eng.bos.redhat.com/brewroot/packages/dpdk/18.11/2.el7_6/x86_64/dpdk-18.11-2.el7_6.x86_64.rpm"
+DPDK_URL=""
 
 progname=$0
 
@@ -40,8 +40,8 @@ while getopts c:l:r:dhvu FLAG; do
        DPDK_BUILD="YES";;
    d)  echo "debug enabled" 
        DEBUG="yes";;
-   r)  echo "DPDK release verison"
-       DPDK_VERSION=$OPTARG
+   r)  echo "DPDK release verison $OPTARG"
+       DPDK_URL=$OPTARG
        ;;
    h)  echo "found $opt" ; usage ;;
    \?)  usage ;;
@@ -61,11 +61,11 @@ then
     location=${location: :-1}
 fi
 
-DPDK_URL=$DPDK_VERSION
 #echo $DPDK_URL
 temp_str=$(basename $DPDK_URL)
 DPDK_TOOL_URL=$(dirname $DPDK_URL)/${temp_str/dpdk/dpdk-tools}
-
+DPDK_VERSION=`echo $temp_str | grep -oP "[1-9]+\.[1-9]+\-[1-9]+" | sed -n 's/\.//p'`
+echo "DPDK VERISON IS "$DPDK_VERSION
 
 extra="ks=file:/${dist}-vm.ks console=ttyS0,115200"
 
@@ -235,10 +235,9 @@ fi
 yum install -y tuna git nano ftp wget sysstat 1>/root/post_install.log 2>&1
 
 #Here mkdir and download dpdk
-dir_name=`echo \`basename $DPDK_URL\` | grep -oP "[1-9]+\.[1-9]+\-[1-9]+" | sed -n 's/\.//p'`
-mkdir -p /root/dpdkrpms/$dir_name
-wget $DPDK_URL -P /root/dpdkrpms/$dir_name/.
-wget $DPDK_TOOL_URL -P /root/dpdkrpms/$dir_name/.
+mkdir -p /root/dpdkrpms/$DPDK_VERSION
+wget $DPDK_URL -P /root/dpdkrpms/$DPDK_VERSION/.
+wget $DPDK_TOOL_URL -P /root/dpdkrpms/$DPDK_VERSION/.
 
 
 
