@@ -84,7 +84,7 @@ echo deleting master image
 
 #rhel_version=`echo $location | awk -F '/' '{print $(NF-3)}' | awk -F '-' '{print $1}' | tr -d '.'`
 #fix this rhel7 and rhel8 location different use regex get version info 
-rhel_version=`echo $location | grep -oP "\/RHEL-[0-9]\.[0-9]+|\/[0-9]\.[0-9]+/" | tr -d '\.\/\-[a-zA-Z]'`
+rhel_version=`echo $location | grep -oP "\/RHEL-\d+\.\d+|\/\d+\.\d+" | tr -d '\.\/\-[a-zA-Z]'`
 if (( $rhel_version >= 80 ))
 then
     base_repo='repo --name="beaker-BaseOS" --baseurl='$location
