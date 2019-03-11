@@ -151,8 +151,8 @@ zerombr
 
 #firewall and selinux config
 firewall --enabled
-selinux --permissive
-
+#selinux --permissive
+selinux --enforcing
 
 
 %packages --ignoremissing
