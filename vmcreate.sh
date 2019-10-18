@@ -50,9 +50,10 @@ done
 
 shift $(($OPTIND - 1))
 
-vm=master
+VM_NAME=${VM_NAME:-"master"}
+vm=${VM_NAME}
 bridge=virbr0
-master_image=master.qcow2
+master_image=${vm}.qcow2
 image_path=/var/lib/libvirt/images/
 dist=rhel73
 location=$LOCATION
@@ -84,7 +85,7 @@ echo deleting master image
 
 #rhel_version=`echo $location | awk -F '/' '{print $(NF-3)}' | awk -F '-' '{print $1}' | tr -d '.'`
 #fix this rhel7 and rhel8 location different use regex get version info 
-rhel_version=`echo $location | grep -oP "\/RHEL-\d+\.\d+|\/\d+\.\d+" | tr -d '\.\/\-[a-zA-Z]'`
+rhel_version=`echo $location | grep -oP "\/RHEL-\d+\.\d+|\/\d+\.\d+|\/latest-RHEL-\d+\.\d+" | tr -d '\.\/\-[a-zA-Z]'`
 if (( $rhel_version >= 80 ))
 then
     base_repo='repo --name="beaker-BaseOS" --baseurl='$location
