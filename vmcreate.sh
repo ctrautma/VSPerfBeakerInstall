@@ -233,7 +233,7 @@ else
        yum -y install iperf
 fi
 
-
+yum install -y kernel-devel numactl-devel
 yum install -y tuna git nano ftp wget sysstat 1>/root/post_install.log 2>&1
 
 #Here mkdir and download dpdk
