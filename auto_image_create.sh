@@ -8,15 +8,15 @@ unset VM_NAME
 virsh list --all --name | xargs -I {} virsh destroy  {}
 virsh list --all --name | xargs -I {} virsh undefine {}
 
-url_76=http://download.eng.bos.redhat.com/pub/rhel-7/rel-eng/latest-RHEL-7.6/compose/Server/x86_64/os/
+url_76=http://download.eng.pek2.redhat.com/pub/rhel-7/rel-eng/latest-RHEL-7.6/compose/Server/x86_64/os/
 
-url_77=http://download.eng.bos.redhat.com/pub/rhel-7/rel-eng/latest-RHEL-7.7/compose/Server/x86_64/os/
+url_77=http://download.eng.pek2.redhat.com/pub/rhel-7/rel-eng/latest-RHEL-7.7/compose/Server/x86_64/os/
 
-url_78=http://download.eng.bos.redhat.com/pub/rhel-7/rel-eng/latest-RHEL-7.8/compose/Server/x86_64/os/
+url_78=http://download.eng.pek2.redhat.com/pub/rhel-7/rel-eng/latest-RHEL-7.8/compose/Server/x86_64/os/
 
-url_80=http://download.eng.bos.redhat.com/pub/rhel-8/rel-eng/RHEL-8/latest-RHEL-8.0/compose/BaseOS/x86_64/os/
+url_80=http://download.eng.pek2.redhat.com/pub/rhel-8/rel-eng/RHEL-8/latest-RHEL-8.0/compose/BaseOS/x86_64/os/
 
-url_81=http://download.eng.bos.redhat.com/pub/rhel-8/rel-eng/RHEL-8/latest-RHEL-8.1/compose/BaseOS/x86_64/os/
+url_81=http://download.eng.pek2.redhat.com/pub/rhel-8/rel-eng/RHEL-8/latest-RHEL-8.1/compose/BaseOS/x86_64/os/
 
 
 for url in $url_76 $url_77 $url_78 $url_80 $url_81
@@ -27,7 +27,6 @@ do
         do
             echo $url
             rhel_ver=`echo ${url%/} | awk -F '/' '{print $(NF-4)}' | awk -F '-' '{print $NF}'`
-            #echo "rhel${rhel_ver}-vsperf"-${i}-${j}
             vm_name="rhel${rhel_ver}-vsperf"-${i}-${j}
             export VM_NAME=${vm_name}
             echo $VM_NAME
