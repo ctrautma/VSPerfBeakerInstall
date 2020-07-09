@@ -266,6 +266,8 @@ shutdown
 
 KS_CFG
 
+virsh net-destroy default
+virsh net-start default
 
 echo creating new master image
 qemu-img create -f qcow2 $image_path/$master_image 100G
