@@ -65,7 +65,8 @@ fi
 #echo $DPDK_URL
 temp_str=$(basename $DPDK_URL)
 DPDK_TOOL_URL=$(dirname $DPDK_URL)/${temp_str/dpdk/dpdk-tools}
-DPDK_VERSION=`echo $temp_str | grep -oP "[1-9]+\.[1-9]+\-[1-9]+" | sed -n 's/\.//p'`
+#DPDK_VERSION=`echo $temp_str | grep -oP "[1-9]+\.[1-9]+\-[1-9]+" | sed -n 's/\.//p'`
+DPDK_VERSION=`echo $temp_str | grep -oP "\d+\.\d+\-\d+" | sed -n 's/\.//p'`
 echo "DPDK VERISON IS "$DPDK_VERSION
 
 extra="ks=file:/${dist}-vm.ks console=ttyS0,115200"
