@@ -87,10 +87,11 @@ echo deleting master image
 #rhel_version=`echo $location | awk -F '/' '{print $(NF-3)}' | awk -F '-' '{print $1}' | tr -d '.'`
 #fix this rhel7 and rhel8 location different use regex get version info 
 #rhel_version=`echo $location | grep -oP "\/RHEL-\d+\.\d+|\/\d+\.\d+|\/latest-RHEL-\d+\.\d+" | tr -d '\.\/\-[a-zA-Z]'`
-compose_link=`sed "s/compose.*/COMPOSE_ID/g" <<< "$location"`
-echo $compose_link
-curl -I $compose_link
-rhel_version=`curl -s $compose_link | grep -oP "RHEL-\d+\.\d+" | tr -d '\.\/\-[a-zA-Z]'`
+#curl -I ${location}/isolinux/grub.conf
+# compose_link=`sed "s/compose.*/COMPOSE_ID/g" <<< "$location"`
+# echo $compose_link
+# curl -I $compose_link
+rhel_version=`curl -s ${location}/isolinux/grub.conf | grep title | grep -v Test | awk '{print $NF}' | tr -d '\.\/\-[a-zA-Z]'`
 if (( $rhel_version >= 80 ))
 then
     base_repo='repo --name="beaker-BaseOS" --baseurl='$location
