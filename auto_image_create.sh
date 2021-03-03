@@ -24,7 +24,9 @@ url_79=http://download.eng.pek2.redhat.com/rhel-7/nightly/latest-RHEL-7.9/compos
 
 url_83=http://download.eng.bos.redhat.com/rhel-8/rel-eng/RHEL-8/latest-RHEL-8.3/compose/BaseOS/x86_64/os/
 
-for url in $url_76 $url_77 $url_78 $url_80 $url_81 $url_82
+url_84=http://download.eng.bos.redhat.com/rhel-8/rel-eng/RHEL-8/latest-RHEL-8.4/compose/BaseOS/x86_64/os/
+
+for url in $url_76 $url_77 $url_78 $url_80 $url_81 $url_82 $url_83 $url_84
 do
     for i in 1Q 2Q 4Q
     do
