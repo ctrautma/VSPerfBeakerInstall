@@ -3,9 +3,14 @@
 
 yum install -y virt-install libvirt virt-manager util-linux
 systemctl start libvirtd
+if ! virsh net-list --name | grep -q default;
+then
+    virsh net-define /usr/share/libvirt/networks/default.xml
+    virsh net-start default
+fi
+virsh net-list --all
 
 enforce_status=`getenforce`
-
 setenforce permissive
 
 LOCATION="http://download-node-02.eng.bos.redhat.com/released/RHEL-7/7.3/Server/x86_64/os/"
