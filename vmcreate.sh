@@ -74,7 +74,7 @@ DPDK_TOOL_URL=$(dirname $DPDK_URL)/${temp_str/dpdk/dpdk-tools}
 DPDK_VERSION=`echo $temp_str | grep -oP "\d+\.\d+\-\d+" | sed -n 's/\.//p'`
 echo "DPDK VERISON IS "$DPDK_VERSION
 
-extra="ks=file:/${dist}-vm.ks console=ttyS0,115200"
+extra="inst.ks=file:/${dist}-vm.ks console=ttyS0,115200"
 
 master_exists=`virsh list --all | awk '{print $2}' | grep master`
 if [ -z $master_exists ]; then
@@ -96,7 +96,7 @@ echo deleting master image
 # compose_link=`sed "s/compose.*/COMPOSE_ID/g" <<< "$location"`
 # echo $compose_link
 # curl -I $compose_link
-rhel_version=`curl -s ${location}/isolinux/grub.conf | grep title | grep -v Test | awk '{print $NF}' | tr -d '\.\/\-[a-zA-Z]'`
+rhel_version=`curl -s -k ${location}/isolinux/grub.conf | grep title | grep -v Test | awk '{print $NF}' | tr -d '\.\/\-[a-zA-Z]'`
 if (( $rhel_version >= 80 ))
 then
     base_repo='repo --name="beaker-BaseOS" --baseurl='$location
