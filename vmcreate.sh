@@ -249,7 +249,7 @@ yum -y install iperf3
 ln -s /usr/bin/iperf3 /usr/bin/iperf
 
 yum install -y kernel-devel numactl-devel
-yum install -y tuna git nano ftp wget sysstat 1>/root/post_install.log 2>&1
+yum install -y tuna git nano ftp wget sysstat automake 1>/root/post_install.log 2>&1
 
 #Here mkdir and download dpdk
 mkdir -p /root/dpdkrpms/$DPDK_VERSION
