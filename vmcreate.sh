@@ -256,7 +256,7 @@ rpm -q grubby || yum -y install grubby
 rhel=$(echo $VERSION_ID | cut -d '.' -f 1)
 
 if (( $rhel == 8 )); then
-    yum install -y http://download.eng.bos.redhat.com/brewroot/vol/rhel-8/packages/netperf/2.7.0/5.el8+5/x86_64/netperf-2.7.0-5.el8+5.x86_64.rpm
+    yum install -y http://download.eng.bos.redhat.com/brewroot/vol/rhel-8/packages/netperf/2.7.0/5.el8eng/x86_64/netperf-2.7.0-5.el8eng.x86_64.rpm
     yum install -y iperf3
 elif (( $rhel >= 9 )); then
     yum -y install iperf3
