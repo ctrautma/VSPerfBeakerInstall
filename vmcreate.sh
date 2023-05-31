@@ -191,43 +191,43 @@ then
 touch /etc/yum.repos.d/rhel8.repo
 
 cat > /etc/yum.repos.d/rhel8.repo << REPO
-[RHEL-8-BaseOS]
-name=RHEL-8-BaseOS
+[RHEL-${rhel_version}-BaseOS]
+name=RHEL-${rhel_version}-BaseOS
 baseurl=$location
 enabled=1
 gpgcheck=0
 skip_if_unavailable=1
 
-[RHEL-8-AppStream]
-name=RHEL-8-AppStream
+[RHEL-${rhel_version}-AppStream]
+name=RHEL-${rhel_version}-AppStream
 baseurl=${location/BaseOS/AppStream}
 enabled=1
 gpgcheck=0
 skip_if_unavailable=1
 
-[RHEL-8-Highavail]
-name=RHEL-8-buildroot
+[RHEL-${rhel_version}-Highavail]
+name=RHEL-${rhel_version}-buildroot
 baseurl=${location/BaseOS/HighAvailability}
 enabled=1
 gpgcheck=0
 skip_if_unavailable=1
 
-[RHEL-8-Storage]
-name=RHEL-8-Storage
+[RHEL-${rhel_version}-Storage]
+name=RHEL-${rhel_version}-Storage
 baseurl=${location/BaseOS/ResilientStorage}
 enabled=1
 gpgcheck=0
 skip_if_unavailable=1
 
-[RHEL-8-NFV]
-name=RHEL-8-NFV
+[RHEL-${rhel_version}-NFV]
+name=RHEL-${rhel_version}-NFV
 baseurl=${location/BaseOS/NFV}
 enabled=1
 gpgcheck=0
 skip_if_unavailable=1
 
-[RHEL-8-RT]
-name=RHEL-8-RT
+[RHEL-${rhel_version}-RT]
+name=RHEL-${rhel_version}-RT
 baseurl=${location/BaseOS/RT}
 enabled=1
 gpgcheck=0
@@ -237,37 +237,60 @@ REPO
 
 fi
 
-# if (( $rhel_version >= 80 ))
-# then
-#        yum -y install iperf3
-#        ln -s /usr/bin/iperf3 /usr/bin/iperf
-# else
-#        yum -y install iperf
-# fi
-
 yum -y install iperf3
 ln -s /usr/bin/iperf3 /usr/bin/iperf
 
 yum install -y kernel-devel numactl-devel
 yum install -y tuna git nano ftp wget sysstat automake 1>/root/post_install.log 2>&1
 
-#Here mkdir and download dpdk
-mkdir -p /root/dpdkrpms/$DPDK_VERSION
-wget $DPDK_URL -P /root/dpdkrpms/$DPDK_VERSION/.
-wget $DPDK_TOOL_URL -P /root/dpdkrpms/$DPDK_VERSION/.
+yum install libibverbs -y
 
-git clone https://github.com/ctrautma/vmscripts.git /root/vmscripts 1>/root/post_install.log 2>&1
-mv /root/vmscripts/* /root/. 1>/root/post_install.log 2>&1
-rm -Rf /root/vmscripts 1>/root/post_install.log 2>&1
+yum install -y nmap-ncat tcpdump
 
-if [ "$VIOMMU" == "NO" ] && [ "$DPDK_BUILD" == "NO" ]; then
-    /root/setup_rpms.sh 1>/root/post_install.log 2>&1
-elif [ "$VIOMMU" == "YES" ] && [ "$DPDK_BUILD" == "NO" ]; then
-    /root/setup_rpms.sh -v 1>/root/post_install.log 2>&1
-elif [ "$VIOMMU" == "NO" ] && [ "$DPDK_BUILD" == "YES" ]; then
-    /root/setup_rpms.sh -u 1>/root/post_install.log 2>&1
-elif [ "$VIOMMU" == "YES" ] && [ "$DPDK_BUILD" == "YES" ]; then
-    /root/setup_rpms.sh -u -v 1>/root/post_install.log 2>&1
+# netperf & iperf
+yum install -y gcc-c++ make gcc
+
+rpm -q grubby || yum -y install grubby
+
+. /etc/os-release
+rhel=$(echo $VERSION_ID | cut -d '.' -f 1)
+
+if (( $rhel == 8 )); then
+    yum install -y http://download.eng.bos.redhat.com/brewroot/vol/rhel-8/packages/netperf/2.7.0/5.el8+5/x86_64/netperf-2.7.0-5.el8+5.x86_64.rpm
+    yum install -y iperf3
+elif (( $rhel >= 9 )); then
+    yum -y install iperf3
+    yum -y install netperf
+else
+    # Install python2 for dpdk bonding
+    yum -y install python
+
+    # Install netperf
+    netperf=netperf-2.6.0
+    wget http://lacrosse.corp.redhat.com/~haliu/${netperf}.tar.gz -O /tmp/${netperf}.tar.gz
+    tar zxvf /tmp/${netperf}.tar.gz
+    pushd ${netperf}
+    # add support for IBM new system arch ppc64le
+    sed -i "/ppc64/i\ppc64le:Linux:*:*)\n\ echo powerpc64le-unknown-linux-gnu\n\ exit ;;" config.guess
+    ./configure && make && make install
+    popd
+
+    # Install iperf
+    IPERF_FILE="iperf-2.0.5.tar.gz"
+    wget http://lacrosse.corp.redhat.com/~haliu/${IPERF_FILE}
+    tar xf ${IPERF_FILE}
+    BUILD_DIR="${IPERF_FILE%.tar.gz}"
+    cd ${BUILD_DIR}
+    # add support for IBM new system arch ppc64le
+    sed -i "/ppc64/i\ppc64le:Linux:*:*)\n\ echo powerpc64le-unknown-linux-gnu\n\ exit ;;" config.guess
+    ./configure && make && make install
+    cd ..
+
+    #Cleanup directories
+    rm -f ${IPERF_FILE}
+    rm -Rf IPERF*
+    rm -f ${netperf}.tar.gz
+    rm -Rf netperf*
 fi
 
 %end
