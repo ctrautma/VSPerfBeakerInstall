@@ -26,11 +26,13 @@ url_83=http://download.eng.bos.redhat.com/rhel-8/rel-eng/RHEL-8/latest-RHEL-8.3/
 
 url_84=http://download.eng.bos.redhat.com/rhel-8/rel-eng/RHEL-8/latest-RHEL-8.4/compose/BaseOS/x86_64/os/
 
-for url in $url_76 $url_77 $url_78 $url_80 $url_81 $url_82 $url_83 $url_84
+url_89=http://download.eng.pek2.redhat.com/rhel-8/nightly/RHEL-8/latest-RHEL-8.9/compose/BaseOS/x86_64/os/
+
+for url in $url_89
 do
-    for i in 1Q 2Q 4Q
+    for i in 1Q
     do
-        for j in viommu noviommu
+        for j in viommu
         do
             echo $url
             rhel_ver=`echo ${url%/} | awk -F '/' '{print $(NF-4)}' | awk -F '-' '{print $NF}'`
