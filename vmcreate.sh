@@ -252,13 +252,13 @@ yum install -y gcc-c++ make gcc
 
 rpm -q grubby || yum -y install grubby
 
-. /etc/os-release
-rhel=$(echo $VERSION_ID | cut -d '.' -f 1)
 
-if (( $rhel == 8 )); then
+if (( $rhel_version >= 80 )) && (( $rhel_version < 90 ))
+then
     yum install -y http://download.eng.bos.redhat.com/brewroot/vol/rhel-8/packages/netperf/2.7.0/5.el8eng/x86_64/netperf-2.7.0-5.el8eng.x86_64.rpm
     yum install -y iperf3
-elif (( $rhel >= 9 )); then
+elif (( $rhel_version >= 90 ))
+then
     yum -y install iperf3
     yum -y install netperf
 else
@@ -344,3 +344,4 @@ fi
 rm $dist-vm.ks
 
 setenforce $enforce_status
+
