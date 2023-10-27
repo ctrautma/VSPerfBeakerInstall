@@ -252,6 +252,7 @@ yum install -y gcc-c++ make gcc
 
 rpm -q grubby || yum -y install grubby
 
+echo "PermitRootLogin yes" >> /etc/ssh/sshd_config
 
 if (( $rhel_version >= 80 )) && (( $rhel_version < 90 ))
 then
