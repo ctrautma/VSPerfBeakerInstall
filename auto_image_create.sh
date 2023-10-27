@@ -26,7 +26,11 @@ url_83=http://download.eng.bos.redhat.com/rhel-8/rel-eng/RHEL-8/latest-RHEL-8.3/
 
 url_84=http://download.eng.bos.redhat.com/rhel-8/rel-eng/RHEL-8/latest-RHEL-8.4/compose/BaseOS/x86_64/os/
 
+url_86=http://download.eng.pek2.redhat.com/rhel-8/rel-eng/RHEL-8/latest-RHEL-8.6.0/compose/BaseOS/x86_64/os/
+
 url_89=http://download.eng.pek2.redhat.com/rhel-8/rel-eng/RHEL-8/latest-RHEL-8.9.0/compose/BaseOS/x86_64/os/
+
+url_92=http://download.eng.pek2.redhat.com/rhel-9/rel-eng/RHEL-9/latest-RHEL-9.2.0/compose/BaseOS/x86_64/os/
 
 url_93=http://download.eng.pek2.redhat.com/rhel-9/rel-eng/RHEL-9/latest-RHEL-9.3.0/compose/BaseOS/x86_64/os/
 
