@@ -34,6 +34,8 @@ url_92=http://download.eng.pek2.redhat.com/rhel-9/rel-eng/RHEL-9/latest-RHEL-9.2
 
 url_93=http://download.eng.pek2.redhat.com/rhel-9/rel-eng/RHEL-9/latest-RHEL-9.3.0/compose/BaseOS/x86_64/os/
 
+url_94=http://download.eng.pek2.redhat.com/rhel-9/rel-eng/RHEL-9/latest-RHEL-9.4.0/compose/BaseOS/x86_64/os/
+
 for url in $url_89
 do
     for i in 1Q
