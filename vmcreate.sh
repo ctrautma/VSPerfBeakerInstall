@@ -116,7 +116,7 @@ fi
 
 cat << KS_CFG > $dist-vm.ks
 # System authorization information
-auth --enableshadow --passalgo=sha512
+authselect --enableshadow --passalgo=sha512
 
 # Use network installation
 url --url=$location
@@ -151,7 +151,10 @@ rootpw  redhat
 skipx
 
 # System timezone
-timezone US/Eastern --isUtc --ntpservers=10.16.31.254,clock.util.phx2.redhat.com,clock02.util.phx2.redhat.com
+timezone --utc US/Eastern
+timesource --ntp-server 10.16.31.254
+timesource --ntp-server clock.util.phx2.redhat.com
+timesource --ntp-server clock2.util.phx2.redhat.com
 
 # System bootloader configuration
 bootloader --location=mbr --timeout=5 --append="crashkernel=auto rhgb quiet console=ttyS0,115200"
