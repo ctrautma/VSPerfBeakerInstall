@@ -96,7 +96,8 @@ echo deleting master image
 # compose_link=`sed "s/compose.*/COMPOSE_ID/g" <<< "$location"`
 # echo $compose_link
 # curl -I $compose_link
-rhel_version=`curl -s -k ${location}/isolinux/grub.conf | grep title | grep -v Test | awk '{print $NF}' | tr -d '\.\/\-[a-zA-Z]'`
+# rhel_version=`curl -s -k ${location}/isolinux/grub.conf | grep title | grep -v Test | awk '{print $NF}' | tr -d '\.\/\-[a-zA-Z]'`
+rhel_version=`curl -s -k ${location}/media.repo | grep name= | awk '{print $NF}' | awk -F '.' '{print $1$2}'
 if (( $rhel_version >= 80 ))
 then
     base_repo='repo --name="beaker-BaseOS" --baseurl='$location
@@ -256,6 +257,8 @@ yum install -y gcc-c++ make gcc
 rpm -q grubby || yum -y install grubby
 
 echo "PermitRootLogin yes" >> /etc/ssh/sshd_config
+
+rpm -ivh http://dl.fedoraproject.org/pub/epel/epel-release-latest-$(( ${rhel_version} / 10 )).noarch.rpm
 
 if (( $rhel_version >= 80 )) && (( $rhel_version < 90 ))
 then
