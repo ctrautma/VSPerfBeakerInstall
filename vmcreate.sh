@@ -97,7 +97,7 @@ echo deleting master image
 # echo $compose_link
 # curl -I $compose_link
 # rhel_version=`curl -s -k ${location}/isolinux/grub.conf | grep title | grep -v Test | awk '{print $NF}' | tr -d '\.\/\-[a-zA-Z]'`
-rhel_version=`curl -s -k ${location}/media.repo | grep name= | awk '{print $NF}' | awk -F '.' '{print $1$2}'
+rhel_version=`curl -s -k ${location}/media.repo | grep name= | awk '{print $NF}' | awk -F '.' '{print $1$2}'`
 if (( $rhel_version >= 80 ))
 then
     base_repo='repo --name="beaker-BaseOS" --baseurl='$location
