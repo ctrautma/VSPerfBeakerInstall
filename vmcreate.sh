@@ -89,16 +89,9 @@ fi
 echo deleting master image
 /bin/rm -f $image_path/$master_image
 
-#rhel_version=`echo $location | awk -F '/' '{print $(NF-3)}' | awk -F '-' '{print $1}' | tr -d '.'`
-#fix this rhel7 and rhel8 location different use regex get version info 
-#rhel_version=`echo $location | grep -oP "\/RHEL-\d+\.\d+|\/\d+\.\d+|\/latest-RHEL-\d+\.\d+" | tr -d '\.\/\-[a-zA-Z]'`
-#curl -I ${location}/isolinux/grub.conf
-# compose_link=`sed "s/compose.*/COMPOSE_ID/g" <<< "$location"`
-# echo $compose_link
-# curl -I $compose_link
-# rhel_version=`curl -s -k ${location}/isolinux/grub.conf | grep title | grep -v Test | awk '{print $NF}' | tr -d '\.\/\-[a-zA-Z]'`
 rhel_version=`curl -s -k ${location}/media.repo | grep name= | awk '{print $NF}' | awk -F '.' '{print $1$2}'`
-if (( $rhel_version >= 80 ))
+rhel_major_ver=`curl -s -k ${location}/media.repo | grep name= | awk '{print $NF}' | awk -F '.' '{print $1}'`
+if (( $rhel_major_ver >= 8 ))
 then
     base_repo='repo --name="beaker-BaseOS" --baseurl='$location
     app_repo='repo --name="beaker-AppStream" --baseurl='${location/BaseOS/AppStream}
@@ -189,50 +182,70 @@ skip_if_unavailable=1
 REPO
 
 
-if (( $rhel_version >= 80 ))
+if (( $rhel_major_ver >= 8 ))
 then
 
-touch /etc/yum.repos.d/rhel8.repo
+touch /etc/yum.repos.d/rhel${rhel_major_ver}.repo
 
-cat > /etc/yum.repos.d/rhel8.repo << REPO
-[RHEL-${rhel_version}-BaseOS]
-name=RHEL-${rhel_version}-BaseOS
+cat > /etc/yum.repos.d/rhel${rhel_major_ver}.repo << REPO
+[RHEL-${rhel_major_ver}-BaseOS]
+name=RHEL-${rhel_major_ver}-BaseOS
 baseurl=$location
 enabled=1
 gpgcheck=0
 skip_if_unavailable=1
 
-[RHEL-${rhel_version}-AppStream]
-name=RHEL-${rhel_version}-AppStream
+[RHEL-${rhel_major_ver}-AppStream]
+name=RHEL-${rhel_major_ver}-AppStream
 baseurl=${location/BaseOS/AppStream}
 enabled=1
 gpgcheck=0
 skip_if_unavailable=1
 
-[RHEL-${rhel_version}-Highavail]
-name=RHEL-${rhel_version}-buildroot
+[RHEL-${rhel_major_ver}-Highavail]
+name=RHEL-${rhel_major_ver}-buildroot
 baseurl=${location/BaseOS/HighAvailability}
 enabled=1
 gpgcheck=0
 skip_if_unavailable=1
 
-[RHEL-${rhel_version}-Storage]
-name=RHEL-${rhel_version}-Storage
+[RHEL-${rhel_major_ver}-Storage]
+name=RHEL-${rhel_major_ver}-Storage
 baseurl=${location/BaseOS/ResilientStorage}
 enabled=1
 gpgcheck=0
 skip_if_unavailable=1
 
-[RHEL-${rhel_version}-NFV]
-name=RHEL-${rhel_version}-NFV
+[RHEL-${rhel_major_ver}-NFV]
+name=RHEL-${rhel_major_ver}-NFV
 baseurl=${location/BaseOS/NFV}
 enabled=1
 gpgcheck=0
 skip_if_unavailable=1
 
-[RHEL-${rhel_version}-RT]
-name=RHEL-${rhel_version}-RT
+[RHEL-${rhel_major_ver}-RT]
+name=RHEL-${rhel_major_ver}-RT
 baseurl=${location/BaseOS/RT}
+enabled=1
+gpgcheck=0
+skip_if_unavailable=1
+
+[beaker-harness]
+name=beaker-harness
+baseurl=http://beaker.engineering.redhat.com/harness/RedHatEnterpriseLinux${rhel_major_ver}/
+enabled=1
+gpgcheck=0
+
+[beaker-buildroot]
+name=beaker-buildroot
+baseurl=http://download.devel.redhat.com/rhel-${rhel_major_ver}/nightly/BUILDROOT-${rhel_major_ver}/latest-BUILDROOT-${rhel_major_ver}-RHEL-${rhel_major_ver}/compose/Buildroot/x86_64/os/
+enabled=1
+gpgcheck=0
+skip_if_unavailable=1
+
+[restraint]
+name=restraint
+baseurl=http://fs-qe.usersys.redhat.com/ftp/pub/lookaside/beaker-harness-active/rhel-${rhel_major_ver}
 enabled=1
 gpgcheck=0
 skip_if_unavailable=1
@@ -241,64 +254,28 @@ REPO
 
 fi
 
-yum -y install iperf3
-ln -s /usr/bin/iperf3 /usr/bin/iperf
 
-yum install -y kernel-devel numactl-devel
-yum install -y tuna git nano ftp wget sysstat automake 1>/root/post_install.log 2>&1
-
-yum install libibverbs -y
-
-yum install -y nmap-ncat tcpdump
-
-# netperf & iperf
-yum install -y gcc-c++ make gcc
-
-rpm -q grubby || yum -y install grubby
-
-echo "PermitRootLogin yes" >> /etc/ssh/sshd_config
-
-rpm -ivh http://dl.fedoraproject.org/pub/epel/epel-release-latest-$(( ${rhel_version} / 10 )).noarch.rpm
-
-if (( $rhel_version >= 80 )) && (( $rhel_version < 90 ))
+if (( $rhel_major_ver == 10 ))
 then
-    yum install -y http://download.eng.bos.redhat.com/brewroot/vol/rhel-8/packages/netperf/2.7.0/5.el8eng/x86_64/netperf-2.7.0-5.el8eng.x86_64.rpm
-    yum install -y iperf3
-elif (( $rhel_version >= 90 ))
-then
-    yum -y install iperf3
-    yum -y install netperf
-else
-    # Install python2 for dpdk bonding
-    yum -y install python
 
-    # Install netperf
-    netperf=netperf-2.6.0
-    wget http://lacrosse.corp.redhat.com/~haliu/${netperf}.tar.gz -O /tmp/${netperf}.tar.gz
-    tar zxvf /tmp/${netperf}.tar.gz
-    pushd ${netperf}
-    # add support for IBM new system arch ppc64le
-    sed -i "/ppc64/i\ppc64le:Linux:*:*)\n\ echo powerpc64le-unknown-linux-gnu\n\ exit ;;" config.guess
-    ./configure && make && make install
-    popd
+cat > /etc/yum.repos.d/beaker-buildroot-10.repo << REPO
+[beaker-buildroot]
+name=beaker-buildroot
+baseurl=http://download.devel.redhat.com/rhel-10/nightly/BUILDROOT-10-Public-Beta/latest-BUILDROOT-10-RHEL-10/compose/Buildroot/x86_64/os/
+enabled=1
+gpgcheck=0
+skip_if_unavailable=1
+REPO
 
-    # Install iperf
-    IPERF_FILE="iperf-2.0.5.tar.gz"
-    wget http://lacrosse.corp.redhat.com/~haliu/${IPERF_FILE}
-    tar xf ${IPERF_FILE}
-    BUILD_DIR="${IPERF_FILE%.tar.gz}"
-    cd ${BUILD_DIR}
-    # add support for IBM new system arch ppc64le
-    sed -i "/ppc64/i\ppc64le:Linux:*:*)\n\ echo powerpc64le-unknown-linux-gnu\n\ exit ;;" config.guess
-    ./configure && make && make install
-    cd ..
-
-    #Cleanup directories
-    rm -f ${IPERF_FILE}
-    rm -Rf IPERF*
-    rm -f ${netperf}.tar.gz
-    rm -Rf netperf*
 fi
+
+yum install -y git 1>>/root/post_install.log 2>&1
+yum install -y wget 1>>/root/post_install.log 2>&1
+echo "PermitRootLogin yes" >> /etc/ssh/sshd_config
+git clone https://github.com/wanghekai/VSPerfBeakerInstall.git 1>>/root/post_install.log 2>&1
+pushd VSPerfBeakerInstall 1>>/root/post_install.log 2>&1
+sh post_install.sh  1>>/root/post_install.log 2>&1
+popd 1>>/root/post_install.log 2>&1
 
 %end
 
